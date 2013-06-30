@@ -57,7 +57,7 @@ class SimpleChoiceFilter(Filter):
     empty_label = 'All'
 
     class Media:
-        js = ('filters/SimpleChoiceFilter.js',)
+        js = ('djangogenerics/js/SimpleChoiceFilter.js',)
 
     def get_filter_options(self):
         """
@@ -68,7 +68,7 @@ class SimpleChoiceFilter(Filter):
         in the right sidebar.
         """
         raise NotImplementedError('get_filter_options must be implemented')
-    
+
     def get_filter_widget(self):
         return ChoiceField(
             choices=[('', self.empty_label)] + self.get_filter_options()
