@@ -1,1 +1,7 @@
 include README.rst LICENSE
+recursive-include djangogenerics/templates *.html
+recursive-include djangogenerics/static *
+recursive-include djangogenerics  *.py
+recursive-exclude * .DS_Store
+recursive-exclude * __pycache__
+recursive-exclude * *.py[co]
