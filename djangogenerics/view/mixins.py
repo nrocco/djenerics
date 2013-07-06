@@ -6,7 +6,7 @@ from django.forms import CharField
 from django.forms import ChoiceField
 from django.forms import HiddenInput
 
-from django.conf import settings
+from django.contrib import messages
 from django.contrib.auth import REDIRECT_FIELD_NAME
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
@@ -245,6 +245,27 @@ class SelectRelatedMixin(object):
 
         queryset = super(SelectRelatedMixin, self).get_queryset()
         return queryset.select_related(*self.select_related)
+
+
+
+class FormMessagesMixin(object):
+
+    def get_message_form_invalid(self):
+        verbose_name = self.model._meta.verbose_name
+        return 'Oops. Something went wrong with %s `%s`.' % (verbose_name,
+                                                             self.object.name)
+
+    def get_message_form_valid(self):
+        verbose_name = self.model._meta.verbose_name.capitalize()
+        return '%s `%s` is updated.' % (verbose_name, self.object.name)
+
+    def form_valid(self, form):
+        messages.success(self.request, self.get_message_form_valid())
+        return super(FormMessagesMixin, self).form_valid(form)
+
+    def form_invalid(self, form):
+        messages.warn(self.request, self.get_message_form_invalid())
+        return super(FormMessagesMixin, self).form_valid(form)
 
 
 
