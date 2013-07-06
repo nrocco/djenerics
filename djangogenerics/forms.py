@@ -84,7 +84,11 @@ class ForeignKeyAutoCompleteWidget(TextInput):
             'name': name
         }
 
-        attrs['class'] = 'djangojax-fkac'
+        if 'class' in attrs:
+            attrs['class'] = '%s %s' % (attrs['class'], 'djangojax-fkac',)
+        else:
+            attrs['class'] = 'djangojax-fkac'
+
         attrs['data-store'] = hidden_attrs['id']
         attrs['data-remote'] = self.endpoint
         attrs['data-key'] = self.datakey
@@ -100,4 +104,4 @@ class ForeignKeyAutoCompleteWidget(TextInput):
             attrs["value"] = getattr(obj, self.datakey)
             hidden_attrs["value"] = value
 
-        return mark_safe(u'<input type="hidden"%s /><input type="text"%s/>' % (flatatt(hidden_attrs), flatatt(attrs)))
+        return mark_safe(u'<input type="text"%s/><input type="hidden"%s />' % (flatatt(attrs), flatatt(hidden_attrs)))
