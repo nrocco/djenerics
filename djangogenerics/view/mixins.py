@@ -252,12 +252,12 @@ class FormMessagesMixin(object):
 
     def get_message_form_invalid(self):
         verbose_name = self.model._meta.verbose_name
-        return 'Oops. Something went wrong with %s `%s`.' % (verbose_name,
-                                                             self.object.name)
+        return u'Oops. Something went wrong with %s `%s`.' % (verbose_name,
+                                                              self.object)
 
     def get_message_form_valid(self):
         verbose_name = self.model._meta.verbose_name.capitalize()
-        return '%s `%s` is updated.' % (verbose_name, self.object.name)
+        return u'%s `%s` is updated.' % (verbose_name, self.object)
 
     def form_valid(self, form):
         messages.success(self.request, self.get_message_form_valid())
