@@ -88,6 +88,3 @@ class ModelChoiceFilter(SimpleChoiceFilter):
         By default return all the objects for this model
         """
         return self.model.objects.all()
-
-
-
