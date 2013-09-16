@@ -3,7 +3,6 @@ from django.forms import ModelChoiceField
 from django.forms import Form
 
 
-
 class Filter(Form):
 
     # Human-readable title for this filter widget
@@ -22,7 +21,7 @@ class Filter(Form):
         self.fields[self.parameter_name].required = False
         self.fields[self.parameter_name].widget.attrs.update(
             {
-                'class' : 'simple_choice_filter',
+                'class': 'simple_choice_filter',
                 'onchange': 'simple_choice_filter_changed(this)'
             }
         )
@@ -47,7 +46,7 @@ class Filter(Form):
         `self.value()`.
         """
         if self.value():
-            return queryset.filter(**{self.parameter_name:self.value()})
+            return queryset.filter(**{self.parameter_name: self.value()})
         else:
             return queryset
 

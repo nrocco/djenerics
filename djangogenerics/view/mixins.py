@@ -9,9 +9,13 @@ from django.forms import HiddenInput
 from django.contrib import messages
 from django.contrib.auth import REDIRECT_FIELD_NAME
 from django.contrib.auth.decorators import login_required
+
 from django.utils.decorators import method_decorator
 
+from django.core.exceptions import ImproperlyConfigured
+
 from djangogenerics.widgets import DateDrillDownWidget
+
 
 class LoginRequiredMixin(object):
     """
@@ -39,10 +43,12 @@ class LoginRequiredMixin(object):
     redirect_field_name = REDIRECT_FIELD_NAME
     login_url = None
 
-    @method_decorator(login_required(redirect_field_name=redirect_field_name, login_url=login_url))
+    @method_decorator(login_required(redirect_field_name=redirect_field_name,
+                                     login_url=login_url))
     def dispatch(self, request, *args, **kwargs):
-        return super(LoginRequiredMixin, self).dispatch(request, *args, **kwargs)
-
+        return super(LoginRequiredMixin, self).dispatch(request,
+                                                        *args,
+                                                        **kwargs)
 
 
 class InitialDataFormViewMixin(object):
@@ -51,10 +57,9 @@ class InitialDataFormViewMixin(object):
         initial = super(InitialDataFormViewMixin, self).get_initial()
         if "GET" == self.request.method:
             if self.request.GET:
-                for key,value in self.request.GET.items():
+                for key, value in self.request.GET.items():
                     initial[key] = value
         return initial
-
 
 
 class SearchableListMixin(object):
@@ -78,14 +83,14 @@ class SearchableListMixin(object):
     def _create_search_form(self, request):
         form = Form(request.GET)
         form.fields[self.searchable_key] = CharField(
-            label = self.searchable_label,
-            required = False
+            label=self.searchable_label,
+            required=False
         )
         form.fields[self.searchable_key].widget.attrs.update(
-           {
-               'class': 'searchable-form',
-               'placeholder': 'Search',
-           }
+            {
+                'class': 'searchable-form',
+                'placeholder': 'Search',
+            }
         )
 
         # Add hidden input fields to keep current query sting
@@ -97,7 +102,9 @@ class SearchableListMixin(object):
 
     def dispatch(self, request, *args, **kwargs):
         self.search_form = self._create_search_form(request)
-        return super(SearchableListMixin, self).dispatch(request, *args, **kwargs)
+        return super(SearchableListMixin, self).dispatch(
+            request, *args, **kwargs
+        )
 
     def get_context_data(self, **kwargs):
         context = super(SearchableListMixin, self).get_context_data(**kwargs)
@@ -125,10 +132,9 @@ class SearchableListMixin(object):
             filter = '%s__%s' % (field, self.searchable_lookup_type)
             q = Q()
             for part in parts:
-                q &= Q(**{filter:part})
+                q &= Q(**{filter: part})
             qq |= q
         return qq
-
 
 
 class FilterableListMixin(object):
@@ -141,10 +147,11 @@ class FilterableListMixin(object):
         Initializes all the filter widgets passing in the request
         """
         self.filter_widgets = [f(request.GET) for f in self.filter_widgets]
-        return super(FilterableListMixin, self).dispatch(request, *args, **kwargs)
+        return super(FilterableListMixin, self).dispatch(
+            request, *args, **kwargs
+        )
 
     def get_filterable_filters(self):
-        model_fields = self.model._meta.get_all_field_names()
         filters = {}
         for allowed_filter in self.allowed_filters:
             for get_param in self.request.GET:
@@ -166,15 +173,12 @@ class FilterableListMixin(object):
         return queryset.filter(**self.get_filterable_filters())
 
 
-
-
 class RedirectRefererMixin(object):
     def form_valid(self, form):
         referer = self.request.POST.get('_referer', None)
         if referer:
             self.success_url = referer
         return super(RedirectRefererMixin, self).form_valid(form)
-
 
 
 class MassActionsMixin(object):
@@ -188,11 +192,11 @@ class MassActionsMixin(object):
         form = Form()
         form.fields['_selected_action'] = ChoiceField(
             label='Actions',
-            required = False,
+            required=False,
             choices=[('', '---')] + [(a.__name__, a.short_description) for a in self.mass_actions]
         )
         form.fields['_selected_objects'] = CharField(
-            required = False,
+            required=False,
             widget=HiddenInput()
         )
         return form
@@ -203,14 +207,16 @@ class MassActionsMixin(object):
         If so, render that output instead of the view itself
         """
         if '_selected_action' in request.POST:
-            return self.render_mass_action(request.POST['_selected_action'], request)
+            return self.render_mass_action(request.POST['_selected_action'],
+                                           request)
         else:
             self.mass_actions_form = self._create_mass_actions_form()
         return super(MassActionsMixin, self).dispatch(request, *args, **kwargs)
 
     def render_mass_action(self, action, request):
         for mass_action in self.mass_actions:
-            if mass_action.__name__ == action and hasattr(mass_action, '__call__'):
+            if mass_action.__name__ == action \
+               and hasattr(mass_action, '__call__'):
                 ids = [int(id) for id in request.POST.get('_selected_objects', '').split(',')]
                 return mass_action(
                     request,
@@ -225,7 +231,6 @@ class MassActionsMixin(object):
         return context
 
 
-
 class SelectRelatedMixin(object):
     """
     Mixin allows you to provide a tuple or list of related models to
@@ -235,17 +240,20 @@ class SelectRelatedMixin(object):
 
     def get_queryset(self):
         if self.select_related is None:
-            raise ImproperlyConfigured(u"%(cls)s is missing the "
-                "select_related property. This must be a tuple or list." % {
-                    "cls": self.__class__.__name__})
+            raise ImproperlyConfigured(
+                "%s is missing the "
+                "select_related property. This must be a tuple or list." %
+                self.__class__.__name__
+            )
 
         if not isinstance(self.select_related, (tuple, list)):
-            raise ImproperlyConfigured(u"%(cls)s's select_related property "
-                "must be a tuple or list." % {"cls": self.__class__.__name__})
+            raise ImproperlyConfigured(
+                "%s's select_related property "
+                "must be a tuple or list." % self.__class__.__name__
+            )
 
         queryset = super(SelectRelatedMixin, self).get_queryset()
         return queryset.select_related(*self.select_related)
-
 
 
 class FormMessagesMixin(object):
@@ -257,7 +265,6 @@ class FormMessagesMixin(object):
     def form_valid(self, form):
         messages.success(self.request, self.get_message_form_valid())
         return super(FormMessagesMixin, self).form_valid(form)
-
 
 
 class DateDrillDownMixin(object):
@@ -274,12 +281,12 @@ class DateDrillDownMixin(object):
     def _get_day_key(self):
         return '{}__day'.format(self.dd_date_field)
 
-
     def dispatch(self, request, *args, **kwargs):
         if not self.dd_date_field:
-            raise ValueError(u"%(cls)s is missing the "
-               "dd_date_field property. This must be set to one "
-                "of the model fields" % {'cls':self.__class__.__name__})
+            raise ValueError(
+                "%s is missing the dd_date_field property. "
+                "This must be set to one of the model fields" %
+                self.__class__.__name__)
 
         self.dd_date_values = {}
 
@@ -298,7 +305,9 @@ class DateDrillDownMixin(object):
         if d_val:
             self.dd_date_values[d_key] = d_val
 
-        return super(DateDrillDownMixin, self).dispatch(request, *args, **kwargs)
+        return super(DateDrillDownMixin, self).dispatch(request,
+                                                        *args,
+                                                        **kwargs)
 
     def _get_dd_date_type(self):
         if self._get_year_key() in self.dd_date_values and \

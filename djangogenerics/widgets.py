@@ -1,6 +1,7 @@
 from django.utils.safestring import mark_safe
 from urllib import urlencode
 
+
 class DateDrillDownWidget(object):
 
     def __init__(self, *args, **kwargs):
@@ -25,9 +26,8 @@ class DateDrillDownWidget(object):
         return '<a href="?{}">{}</a>'.format(url, date_value)
 
     def render(self):
-        dates = ['<li>{}</li>'.format(self.get_link(date)) for date in self.dates]
+        dates = ['<li>{}</li>'.format(self.get_link(d)) for d in self.dates]
         return mark_safe("\n".join(dates))
 
     def __str__(self):
         return self.render()
-

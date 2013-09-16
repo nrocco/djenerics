@@ -1,15 +1,14 @@
-from django.core.urlresolvers import reverse
 from django.forms import CharField
 from django.forms import ValidationError
-from django.forms.fields import CharField
+
 from django.forms.util import flatatt
+
 from django.forms.widgets import DateInput as DjangoDateInput
 from django.forms.widgets import DateTimeInput as DjangoDateTimeInput
 from django.forms.widgets import TextInput
 from django.forms.widgets import TimeInput as DjangoTimeInput
-from django.template.loader import render_to_string
-from django.utils.safestring import mark_safe
 
+from django.utils.safestring import mark_safe
 
 
 class EmailInput(TextInput):
@@ -44,13 +43,15 @@ class ForeignKeyAutoCompleteField(CharField):
 
         if not widget or not isinstance(widget, ForeignKeyAutoCompleteWidget):
             kwargs["widget"] = ForeignKeyAutoCompleteWidget(
-                model = self.model,
-                datakey = kwargs.pop("datakey", 'name'),
-                datalist = kwargs.pop('datalist', ''),
-                endpoint = kwargs.pop("endpoint", '')
+                model=self.model,
+                datakey=kwargs.pop("datakey", 'name'),
+                datalist=kwargs.pop('datalist', ''),
+                endpoint=kwargs.pop("endpoint", '')
             )
 
-        super(ForeignKeyAutoCompleteField, self).__init__(max_length=255, *args, **kwargs)
+        super(ForeignKeyAutoCompleteField, self).__init__(max_length=255,
+                                                          *args,
+                                                          **kwargs)
 
     def clean(self, value):
         if value:
@@ -59,7 +60,6 @@ class ForeignKeyAutoCompleteField(CharField):
             if self.required:
                 raise ValidationError(self.error_messages['required'])
             return None
-
 
 
 class ForeignKeyAutoCompleteWidget(TextInput):
@@ -100,8 +100,10 @@ class ForeignKeyAutoCompleteWidget(TextInput):
             try:
                 obj = self.model.objects.get(pk=value)
             except:
-                raise Exception("Cannot find %s object with primary key: %s" % (name, value))
+                raise Exception("Cannot find %s object with "
+                                "primary key: %s" % (name, value))
             attrs["value"] = getattr(obj, self.datakey)
             hidden_attrs["value"] = value
 
-        return mark_safe(u'<input type="text"%s/><input type="hidden"%s />' % (flatatt(attrs), flatatt(hidden_attrs)))
+        return mark_safe(u'<input type="text"%s/><input type="hidden"%s />' %
+                         (flatatt(attrs), flatatt(hidden_attrs)))
