@@ -1,18 +1,17 @@
 #!/usr/bin/env python
 from setuptools import setup
-import djangogenerics
 
 setup(
-    name = 'djangogenerics',
-    version = djangogenerics.__version__,
+    name = 'djenerics',
+    version = '1.0.0',
     packages = [
-        'djangogenerics'
+        'djenerics'
     ],
-    download_url = 'http://github.com/nrocco/djangogenerics',
+    download_url = 'http://github.com/nrocco/djenerics',
     url = 'http://nrocco.github.io/',
-    author = djangogenerics.__author__,
+    author = 'Nico Di Rocco',
     author_email = 'dirocco.nico@gmail.com',
-    description = 'A collection of Django 1.5+ utilities',
+    description = 'A collection of Django 1.5+ and Django Rest Framework 3.0+ utilities',
     long_description = open('README.rst').read(),
     include_package_data = True,
     license = open('LICENSE').read(),
