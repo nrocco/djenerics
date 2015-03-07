@@ -1,9 +1,11 @@
 #!/usr/bin/env python
+import re
+
 from setuptools import setup
 
 setup(
     name = 'djenerics',
-    version = '1.0.0',
+    version = re.search(r'''^__version__\s*=\s*["'](.*)["']''', open('djenerics/__init__.py').read(), re.M).group(1),
     packages = [
         'djenerics'
     ],
