@@ -199,6 +199,11 @@ class RelatedFilterField(FilterField):
     related_name = 'slug'
     lookup_type = 'icontains'
 
+    def __init__(self, model_field=None, **kwargs):
+        super(RelatedFilterField, self).__init__(model_field, **kwargs)
+        if 'related_name' in kwargs:
+            self.related_name = kwargs['related_name']
+
     def get_key(self):
         if not self.raw_value:
             key = '%s__isnull' % (self.model_field or self.name)
