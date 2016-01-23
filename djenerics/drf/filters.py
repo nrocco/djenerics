@@ -4,14 +4,16 @@ import logging
 
 from django.db.models import Q
 
+from rest_framework.exceptions import APIException
 from rest_framework.filters import BaseFilterBackend
 
 
 log = logging.getLogger(__name__)
 splitter = re.compile(r'^(.*[^\s]):([^\s].*)?$')
 
-class InvalidSearchQuery(Exception):
-    pass
+class InvalidSearchQuery(APIException):
+    status_code = 400
+    default_detail = 'Invalid filter'
 
 
 class FilterBackend(BaseFilterBackend):
