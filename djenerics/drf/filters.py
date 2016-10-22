@@ -1,33 +1,13 @@
 import shlex
 import re
-import logging
-
+from django.conf import settings
 from django.db.models import Q
-
-from rest_framework.exceptions import APIException
 from rest_framework.filters import BaseFilterBackend
 
-
-log = logging.getLogger(__name__)
-splitter = re.compile(r'^(.*[^\s]):([^\s].*)?$')
-
-class InvalidSearchQuery(APIException):
-    status_code = 400
-    default_detail = 'Invalid filter'
-
+DEFAULT_SEARCH_PARAM = 'search'
 
 class FilterBackend(BaseFilterBackend):
-    """
-    This filter backend provides query string based filtering.
-    """
-
     def filter_queryset(self, request, queryset, view):
-        """
-        Filtering of the query set is done by the FilterClass
-
-        The FilterClass is defined on the view as the `filter_class`
-        attribute.
-        """
         if not hasattr(view, 'filter_class'):
             return queryset
         filter = view.filter_class()
@@ -37,77 +17,21 @@ class FilterBackend(BaseFilterBackend):
 
 class BaseFilter(object):
     def filter_queryset(self, request, queryset, view):
-        query_params = request.GET.dict().copy()
-        log.debug('Query string: `%s`', request.GET.urlencode())
-
-        if 'search' in query_params:
-            search_query = query_params.pop('search', '')
-            blaat = self.transform_search_query(search_query)
-            blaat.update(query_params)
-            query_params = blaat
-
         for allowed_filter in self.get_all_filters():
-            if allowed_filter.name in query_params:
-                value = query_params.get(allowed_filter.name)
+            if allowed_filter.name in request.GET:
+                value = request.GET[allowed_filter.name]
                 queryset = allowed_filter.filter(queryset, value)
 
-        search_query = query_params.pop('search', None)
+        key = settings.REST_FRAMEWORK.get('SEARCH_PARAM',
+                                          DEFAULT_SEARCH_PARAM)
 
-        if search_query:
+        if key in request.GET:
             queryset = queryset.filter(
-                self.get_searchable_filters(search_query,
+                self.get_searchable_filters(request.GET[key],
                                             self.search_fields)
             )
 
         return queryset
-
-    def transform_search_query(self, query, unassorted_key='search'):
-        """
-        Convert a search query into a dictionary.
-
-        A search query like this one:
-            party: stakker is akker category:"hiha hoi"
-
-        Will be converted to a python dict:
-            {
-                'category': 'hiha hoi',
-                'party': None,
-                'search': 'stakker is akker'
-            }
-
-        It uses a regular expression to split every token on the `:`
-        separator instead of using the string.split() function. This is
-        important to distinguish between the following use cases:
-
-            - 'party:'        => {'party': None}
-            - 'party:tester'  => {'party': 'tester'}
-            - 'party: tester' => {'search': 'party: tester'}
-
-        """
-        retval = {}
-        unassorted = []
-
-        log.debug('Raw search query: %s', query)
-
-        try:
-            raw_parts = shlex.split(query)
-        except ValueError as e:
-            message = 'Raw search query could not be parsed: %s' % e
-            log.warning(message)
-            raise InvalidSearchQuery(message)
-
-        for part in raw_parts:
-            parts = splitter.split(part)
-            if len(parts) == 4:
-                retval[parts[1]] = parts[2]
-            else:
-                unassorted.append(parts[0])
-
-        if unassorted:
-            retval[unassorted_key] = ' '.join(unassorted)
-
-        log.debug('Filter queryset: %s', retval)
-        return retval
 
     def get_all_filters(self):
         filters = []
@@ -128,7 +52,6 @@ class BaseFilter(object):
             for part in parts:
                 q &= Q(**{filter: part})
             qq |= q
-        log.debug(qq)
         return qq
 
 
@@ -138,7 +61,6 @@ class FilterField(object):
 
     def __init__(self, model_field=None, **kwargs):
         self.model_field = model_field
-
         if 'lookup_type' in kwargs:
             self.lookup_type = kwargs['lookup_type']
 
@@ -157,10 +79,6 @@ class FilterField(object):
     def filter(self, queryset, value):
         self.raw_value = value
         filter = {self.get_key(): self.clean(value)}
-        log.debug('Filter queryset: %s == %s',
-                  self.__class__.__name__,
-                  filter)
-
         return queryset.filter(**filter)
 
 

@@ -1,3 +1,7 @@
+from django.conf import settings
+
+DEFAULT_PROJECTION_PARAM = '_fields'
+
 class Ownerable(object):
     def __init__(self, *args, **kwargs):
         '''
@@ -16,18 +20,15 @@ class Ownerable(object):
 
 class Projectable(object):
     def __init__(self, *args, **kwargs):
-        try:
-            projection_param = self.Meta.projection_param
-        except AttributeError:
-            projection_param = '_fields'
+        if 'context' in kwargs and 'request' in kwargs['context']:
+            request = kwargs['context']['request']
+            key = settings.REST_FRAMEWORK.get('PROJECTION_PARAM',
+                                              DEFAULT_PROJECTION_PARAM)
 
-        fields = kwargs['context']['request'].GET.get(projection_param)
-
-        if fields:
-            allowed = set(fields.split(','))
-            existing = set(self.fields.keys())
-
-            for field_name in existing - allowed:
-                self.fields.pop(field_name)
+            if key in request.GET and request.GET[key]:
+                preferred_fields = set(request.GET[key].split(','))
+                for field in set(self.fields.keys()):
+                    if field not in preferred_fields:
+                        self.fields.pop(field)
 
         super(Projectable, self).__init__(*args, **kwargs)
